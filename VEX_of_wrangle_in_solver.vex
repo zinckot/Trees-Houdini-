@@ -1,0 +1,81 @@
+int iteration = chi("Iteration");
+int deg = chi("Degree");
+int iter = point(geoself(), "iterations", 0);
+
+float r = point(geoself(), "radius", 0);
+float angle = sin(0.63 * $PI/deg);
+
+int added_pt = 0;
+
+int num_pt = point(geoself(), "num_pt", 0);
+int last_added_pt = point(geoself(), "added_pt", 0);
+
+int starting_num = num_pt - last_added_pt;
+
+int index = 0;
+    if($F == 1){
+        index = 0;
+        starting_num = 0;
+    }
+    else{
+        index = 1;
+    }
+    
+int angle_idx = 0.5*deg/iteration;
+    
+if((float($F) % ($FEND/iteration))/($FEND/iteration)<0.01 || $F == 1){
+    for(int k = starting_num; k < num_pt; k++){
+        for(int m = index; m < deg; m++){
+            
+            vector base_pos = point(geoself(), "P", k);
+            
+            float pt_angle = point(geoself(), "pt_angle", k);
+            
+            float theta =pt_angle + 2*float(m)*$PI/deg;;
+      
+            int line = addprim(geoself(), "polyline");
+            int tmp = addpoint(geoself(), k);
+            
+            addvertex(geoself(), line, k);
+            addvertex(geoself(), line, tmp);
+            
+            added_pt ++;
+            
+            setpointattrib(geoself(), "pt_angle", tmp, theta, "set");
+            setpointattrib(geoself(), "base_pt", tmp, base_pos, "set");
+        }
+    }
+    
+    iter++;
+    
+    setpointattrib(geoself(), "num_pt", 0, added_pt, "add");
+    setpointattrib(geoself(), "added_pt", 0, added_pt, "set");
+    setpointattrib(geoself(), "iterations", 0, iter, "set");
+    setpointattrib(geoself(), "radius", 0, r * angle, "set");
+    setpointattrib(geoself(), "nor_rad", 0, pow(0.9, iteration*(iter-1)), "add");
+}
+else{
+    for(int k = starting_num; k < num_pt; k++){
+    
+        float time = (float($F) % ($FEND/iteration))/($FEND/iteration);
+        if(abs(1.0-time) < 0.01){
+            time = 1.0;
+        }
+        
+        float norm_rad = point(geoself(), "nor_rad", 0);
+        
+        float theta = point(geoself(), "pt_angle", k);
+        
+        vector base_pos = point(geoself(), "base_pt", k);
+
+        float x = r * cos(theta + iter * $PI);
+        float y = r * sin(theta + iter * $PI);
+        
+        vector final_pos = set(x, y, 0) + base_pos;
+        
+        vector curr_pos = (1.0-time)*base_pos + time*final_pos;
+        
+        setpointattrib(geoself(), "P", k, curr_pos, "set");
+        setpointattrib(geoself(), "origin_rad", k, 1/float(iter), "set");
+    }
+}
